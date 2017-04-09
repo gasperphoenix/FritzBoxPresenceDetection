@@ -20,7 +20,7 @@ Get a local copy of the repository master development by downloading the zip arc
 
 ```
 wget https://github.com/gasperphoenix/FritzBoxPresenceDetection/archive/master.zip
-`` 
+```
 
 Extract the archive content to a local folder.
 
