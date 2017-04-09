@@ -2,6 +2,8 @@
 
 This module brings reliable presence detection for all WLAN devices (including iPhone) that can also be used on a Raspberry Pi.
 
+The task to setup a reliable presence detection for devices that can be used eg. to check if a person is present (by checking mobile phone presence) is not easy. You can ping mobile devices which works for most device types but eg. iPhone devices will enter stealth mode after approx. 10 minutes if the screen is locked. Therefore these devices will be wrongly detected as absent if you ping them. So I started developing another solution. I figured out that my FritzBox is capable to detect the presence status of all WLAN devices (incl. iPhone devices) in a reliable manner with an approx. 1 minutes delay. As outcome I developed this module that  logs into your FritzBox and checks the device availability using the FritzBox WLAN connectivity information. 
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -14,9 +16,7 @@ What things you need to install the software and how to install them
 
 ### Installing
 
-A step by step series of examples that tell you have to get a development env running
-
-Get a local copy of the repository master development by downloading the zip archive from Github. Alternatively you can clone the git repository.
+Get a local copy of the repository master branch by downloading the zip archive from Github. Alternatively you can clone the git repository.
 
 ```
 wget https://github.com/gasperphoenix/FritzBoxPresenceDetection/archive/master.zip
@@ -50,7 +50,7 @@ Step 2: Authenticate with the FritzBox
 fb.login()
 ```
 
-Step 3: Check presence of a device. Make sure to use exactly the same device name that is listed on your FritzBox pages. The method will return 'True' if your device is connected, otherwise 'False'.
+Step 3: Check the presence of a device. Make sure to use exactly the same device name that is listed on your FritzBox pages. The method will return 'True' if your device is connected, otherwise 'False'.
 
 ```
 fb.isDeviceConnected('YourDevice'))
