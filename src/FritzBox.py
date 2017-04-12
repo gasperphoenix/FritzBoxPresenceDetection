@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-# FritzBox.py: Interface module for communication with the FritzBox
+"""FritzBox.py module documentation
+
+This module provides an interface for communication with a FritzBox.
+"""
 
 __author__     = "Dennis Jung"
 __copyright__  = "Copyright 2017, Dennis Jung"
@@ -36,6 +39,16 @@ CONFIG_FILE_FRITZ_BOX = "../cfg/fritzbox.conf"
 # Start of program
 #===============================================================================
 class FritzBox():
+    """Class for communication with a FritzBox
+    
+    Public interfaces:
+        login()
+            Authenticate with the FritzBox to access private pages
+            
+        isDeviceConnected(deviceName)
+            Check if the given device is currently in WLAN access range -> device is present
+    """
+    
     def __init__(self):
         self.__readXMLConfigFritzBox()
         
@@ -47,6 +60,16 @@ class FritzBox():
     
     
     def __readXMLConfigFritzBox(self):
+        """Method to read in the FritzBox authentication credentials from the configuration file.
+        
+        The method reads out the FritzBox authentication credentials from the configuration file.
+        
+        Args:
+            Requires no arguments.
+
+        Returns:
+            Returns no value.
+        """
         
         tree = ElementTree.parse(CONFIG_FILE_FRITZ_BOX)
         
@@ -58,6 +81,19 @@ class FritzBox():
     
     
     def __loadFritzBoxPage(self, url, param):
+        """Method to read out a page from the FritzBox.
+        
+        The method reads out the given page from the FritzBox. It automatically includes a session id
+        between url and param.
+        
+        Args:
+            url (str):   URL of the page that shall be read out from the FritzBox.
+            param (str): Additional parameters that shall be added to the URL.
+
+        Returns:
+            Requested page as string, None otherwise.
+        """
+        
         pageUrl = 'http://' + self.__server + ':' + self.__port + url + "?sid=" + self.sid.decode('utf-8') + param
         
         headers = { "Accept" : "application/xml",
@@ -81,6 +117,18 @@ class FritzBox():
     
     
     def login(self):
+        """Authenticate with the FritzBox to access private pages.
+        
+        The method authenticates with a FritzBox using the authentication credentials
+        read out from the configuration file during the class object instantiation.
+        
+        Args:
+            Does not support any arguments.
+
+        Returns:
+            Does not return any value.
+        """
+        
         headers = { "Accept" : "application/xml",
                     "Content-Type" : "text/plain",
                     "User-Agent" : USER_AGENT}
@@ -156,6 +204,18 @@ class FritzBox():
         
     
     def isDeviceConnected(self, deviceName):
+        """Check if the given device is currently in WLAN access range -> device is present.
+        
+        The method checks if the specified device is currently in WLAN access range of the FritzBox
+        to determine if it is present or not.
+        
+        Args:
+            deviceName (str): Device that shall be checked.
+
+        Returns:
+            True if the device is present, False otherwise.
+        """
+        
         page = self.__loadFritzBoxPage('/data.lua', 'lang=de&no_sidrenew=&page=wSet')
 
         deviceTable = re.findall(r'<table id="uiWlanDevs".*?>.*?</table>', str(page), re.MULTILINE|re.DOTALL)
@@ -175,6 +235,18 @@ class FritzBox():
 
     
 def main():
+    """Main method for testing purposes and usage example.
+        
+        The method is used for testing of the module functionality and to provide
+        an usage example.
+        
+        Args:
+            Requires no arguments.
+
+        Returns:
+            Returns no value.
+    """
+    
     fb = FritzBox()
     
     fb.login()
@@ -185,5 +257,4 @@ def main():
         
     
 if __name__ == '__main__':
-    
     main()

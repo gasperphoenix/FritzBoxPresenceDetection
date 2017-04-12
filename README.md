@@ -1,4 +1,4 @@
-# FritzBoxPresenceDetection
+# FritzBox Presence Detection
 
 This module brings reliable presence detection for all WLAN devices (including iPhone) that can also be used on a Raspberry Pi.
 
@@ -32,7 +32,7 @@ Open the file cfg/fritzbox.conf to enter you credentials for accessing your Frit
 <fritzbox>
 	<ip>192.168.0.1</ip>           // Your FritzBox IP goes here 
 	<port>80</port>                // Usually port 80 should be ok
-	<password>rob2okt.</password>  // Your FritzBox password goes here
+	<password>pass</password>      // Your FritzBox password goes here
 </fritzbox>
 ```
 
