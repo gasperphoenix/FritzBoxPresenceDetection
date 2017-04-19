@@ -38,15 +38,13 @@ CONFIG_FILE_FRITZ_BOX = "../cfg/fritzbox.conf"
 #===============================================================================
 # Start of program
 #===============================================================================
+class UnknownDeviceError(Exception): pass
+
+
 class FritzBox():
-    """Class for communication with a FritzBox
+    """Interface for communication with a FritzBox.
     
-    Public interfaces:
-        login()
-            Authenticate with the FritzBox to access private pages
-            
-        isDeviceConnected(deviceName)
-            Check if the given device is currently in WLAN access range -> device is present
+    This class provides an interface for communication with a FritzBox using LUA pages.
     """
     
     def __init__(self):
@@ -123,7 +121,7 @@ class FritzBox():
         read out from the configuration file during the class object instantiation.
         
         Args:
-            Does not support any arguments.
+            Does not require any arguments.
 
         Returns:
             Does not return any value.
@@ -203,7 +201,7 @@ class FritzBox():
                 return True
         
     
-    def isDeviceConnected(self, deviceName):
+    def isDevicePresent(self, deviceName):
         """Check if the given device is currently in WLAN access range -> device is present.
         
         The method checks if the specified device is currently in WLAN access range of the FritzBox
@@ -211,10 +209,36 @@ class FritzBox():
         
         Args:
             deviceName (str): Device that shall be checked.
+            
+        Raises:
+            UnknownDeviceError: If the given device is not registered with the FritzBox 
 
         Returns:
-            True if the device is present, False otherwise.
+            If the device is registered with the FritzBox the method will return True if the device is present, False otherwise.
         """
+        
+        devices = self.getDevicePresence()
+        
+        if deviceName in devices:
+            return devices[deviceName]
+        else:
+            raise UnknownDeviceError
+                                        
+                
+    def getDevicePresence(self):
+        """Check for all of the FritzBox known devices if they are currently in WLAN access range -> devices are present.
+        
+        The method checks reads out the presence information for all devices known to the FritzBox and returns them in a
+        dictionary.
+        
+        Args:
+            None
+
+        Returns:
+            Dictionary with the device names as key and presence information (True: present, False: absent) as value for each device.
+        """
+        
+        deviceList = {}
         
         page = self.__loadFritzBoxPage('/data.lua', 'lang=de&no_sidrenew=&page=wSet')
 
@@ -227,12 +251,20 @@ class FritzBox():
         devices = re.findall(r'<td.*?>(.*?)</td>', str(devicesSections), re.MULTILINE|re.DOTALL)
                 
         for i in range(len(devices) // 7):
-            if (deviceName in devices[1 + i * 7]):
-                if ("nicht verbunden" in devices[5 + i * 7]):
-                    return False
-                else:         
-                    return True
-
+            name = devices[1 + i * 7]
+            
+            #Strip link tag from device name if encapsulated
+            if "<a" in name:
+                name = re.findall(r'<a.*?>(.*?)</a>', str(name), re.MULTILINE|re.DOTALL)
+                name = name[0]
+            
+            if ("nicht verbunden" in devices[5 + i * 7]):
+                deviceList[name] = False
+            else:         
+                deviceList[name] = True
+                
+        return deviceList
+            
     
 def main():
     """Main method for testing purposes and usage example.
@@ -251,9 +283,11 @@ def main():
     
     fb.login()
     
-    while True:
-        print ('Is YourDevice connected: %1s' % fb.isDeviceConnected('YourDevice'))
-        time.sleep(5)
+    print(fb.getDevicePresence())
+    
+    print(fb.isDevicePresent('YourDevice1'))
+    print(fb.isDevicePresent('YourDevice2'))
+    print(fb.isDevicePresent('UnknownDevice'))
         
     
 if __name__ == '__main__':
