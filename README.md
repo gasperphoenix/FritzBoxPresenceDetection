@@ -53,7 +53,7 @@ fb.login()
 Step 3: Check the presence of a device. Make sure to use exactly the same device name that is listed on your FritzBox pages. The method will return 'True' if your device is connected, otherwise 'False'.
 
 ```
-fb.isDeviceConnected('YourDevice'))
+fb.isDevicePresent('YourDevice'))
 ```
 
 ## Authors
