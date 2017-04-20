@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
-"""FritzBox.py module documentation
+"""Module for communication with a FritzBox.
 
-This module provides an interface for communication with a FritzBox.
+This module provides an interface for communicating with a FritzBox.
 """
 
 __author__     = "Dennis Jung"
 __copyright__  = "Copyright 2017, Dennis Jung"
 __credits__    = ["Dennis Jung"]
 __license__    = "GPL Version 3"
-__version__    = "1.0.0"
 __maintainer__ = "Dennis Jung"
 __email__      = "Dennis.Jung@stressfrei-arbeiten.com"
-__status__     = "Development"
 
 
 #===============================================================================
@@ -21,7 +19,6 @@ import urllib.request
 import hashlib
 import re
 import sys
-import time
 
 from xml.dom import minidom
 
@@ -32,22 +29,43 @@ import xml.etree.ElementTree as ElementTree
 # Constant declarations
 #===============================================================================
 USER_AGENT = "Mozilla/5.0 (U; Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0"
-CONFIG_FILE_FRITZ_BOX = "../cfg/fritzbox.conf"
+
+# Structure of the WLAN device information returned by the FritzBox  
+FB_WLAN_DEV_INFO = dict(
+    FB_DEV_RES1=0,    # Reserved
+    FB_DEV_NAME=1,    # Device name
+    FB_DEV_IP=2,      # Current device IP
+    FB_DEV_MAC=3,     # Device HW MAC address
+    FB_DEV_RES2=4,    # Reserved
+    FB_DEV_CON=5,     # WLAN connectivity information
+    FB_DEV_RES3=6)    # Reserved
+
+# Structure of the WLAN device information  
+WLAN_DEV_INFO = dict(
+    WLAN_DEV_NAME=0,    # Device name
+    WLAN_DEV_IP=1,      # Current device IP
+    WLAN_DEV_MAC=2,     # Device HW MAC address
+    WLAN_DEV_CON=3)     # WLAN connectivity information
+
+#===============================================================================
+# Exceptions
+#===============================================================================
+class UnknownDeviceError(Exception): pass    
+class InvalidParameterError(Exception): pass
 
 
 #===============================================================================
 # Start of program
 #===============================================================================
-class UnknownDeviceError(Exception): pass
-
-
 class FritzBox():
     """Interface for communication with a FritzBox.
     
     This class provides an interface for communication with a FritzBox using LUA pages.
     """
     
-    def __init__(self):
+    def __init__(self, configFile="../cfg/fritzbox.conf"):
+        self.__configFile = configFile
+        
         self.__readXMLConfigFritzBox()
         
         self.sid = ''
@@ -69,7 +87,7 @@ class FritzBox():
             Returns no value.
         """
         
-        tree = ElementTree.parse(CONFIG_FILE_FRITZ_BOX)
+        tree = ElementTree.parse(self.__configFile)
         
         root_element = tree.getroot()
         
@@ -201,7 +219,7 @@ class FritzBox():
                 return True
         
     
-    def isDevicePresent(self, deviceName):
+    def isDevicePresent(self, deviceName=None, deviceMac=None):
         """Check if the given device is currently in WLAN access range -> device is present.
         
         The method checks if the specified device is currently in WLAN access range of the FritzBox
@@ -209,6 +227,7 @@ class FritzBox():
         
         Args:
             deviceName (str): Device that shall be checked.
+            deviceMac (str):  Device Mac that shall be checked.
             
         Raises:
             UnknownDeviceError: If the given device is not registered with the FritzBox 
@@ -217,28 +236,36 @@ class FritzBox():
             If the device is registered with the FritzBox the method will return True if the device is present, False otherwise.
         """
         
-        devices = self.getDevicePresence()
+        devices = self.getWLANDeviceInformation()
         
-        if deviceName in devices:
-            return devices[deviceName]
+        if deviceName is not None:
+            for device in devices:
+                if device[WLAN_DEV_INFO['WLAN_DEV_NAME']] == deviceName:
+                    return device[WLAN_DEV_INFO['WLAN_DEV_CON']]
+        elif deviceMac is not None:
+            for device in devices:
+                if device[WLAN_DEV_INFO['WLAN_DEV_MAC']] == deviceMac:
+                    return device[WLAN_DEV_INFO['WLAN_DEV_CON']]
         else:
-            raise UnknownDeviceError
-                                        
-                
-    def getDevicePresence(self):
-        """Check for all of the FritzBox known devices if they are currently in WLAN access range -> devices are present.
+            raise InvalidParameterError("The required parameters have not been provided")
         
-        The method checks reads out the presence information for all devices known to the FritzBox and returns them in a
-        dictionary.
+        raise UnknownDeviceError("This device is not registered with the FritzBox")
+
+        
+    def getWLANDeviceInformation(self):
+        """Query WLAN information for all FritzBox known devices.
+        
+        The method queries all WLAN related information for all devices known to the FritzBox.
         
         Args:
             None
 
         Returns:
-            Dictionary with the device names as key and presence information (True: present, False: absent) as value for each device.
+            List will all devices and information as two-dimensional matrix. The parameters for each device
+            are accessible using the index FB_WLAN_DEV_INFO elements.
         """
         
-        deviceList = {}
+        deviceList = []
         
         page = self.__loadFritzBoxPage('/data.lua', 'lang=de&no_sidrenew=&page=wSet')
 
@@ -251,17 +278,23 @@ class FritzBox():
         devices = re.findall(r'<td.*?>(.*?)</td>', str(devicesSections), re.MULTILINE|re.DOTALL)
                 
         for i in range(len(devices) // 7):
-            name = devices[1 + i * 7]
+            name = devices[FB_WLAN_DEV_INFO['FB_DEV_NAME'] + i * 7]
             
             #Strip link tag from device name if encapsulated
             if "<a" in name:
                 name = re.findall(r'<a.*?>(.*?)</a>', str(name), re.MULTILINE|re.DOTALL)
                 name = name[0]
+                
+            ip = devices[FB_WLAN_DEV_INFO['FB_DEV_IP'] + i * 7]
             
-            if ("nicht verbunden" in devices[5 + i * 7]):
-                deviceList[name] = False
+            mac = devices[FB_WLAN_DEV_INFO['FB_DEV_MAC'] + i * 7] 
+            
+            if ("nicht verbunden" in devices[FB_WLAN_DEV_INFO['FB_DEV_CON'] + i * 7]):
+                con = False
             else:         
-                deviceList[name] = True
+                con = True
+                
+            deviceList.append([name, ip, mac, con]) # Structure acc. WLAN_DEV_INFO
                 
         return deviceList
             
@@ -283,11 +316,7 @@ def main():
     
     fb.login()
     
-    print(fb.getDevicePresence())
-    
-    print(fb.isDevicePresent('YourDevice1'))
-    print(fb.isDevicePresent('YourDevice2'))
-    print(fb.isDevicePresent('UnknownDevice'))
+    print(fb.getWLANDeviceInformation())
         
     
 if __name__ == '__main__':
