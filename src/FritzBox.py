@@ -15,6 +15,7 @@ __email__      = "Dennis.Jung@stressfrei-arbeiten.com"
 #===============================================================================
 # Imports
 #===============================================================================
+import logging
 import urllib.request
 import hashlib
 import re
@@ -23,6 +24,23 @@ import sys
 from xml.dom import minidom
 
 import xml.etree.ElementTree as ElementTree
+
+
+#===============================================================================
+# Setup logger
+#===============================================================================
+if __name__ == '__main__':
+#    logging.basicConfig(level=logging.DEBUG,
+#                        format="[{asctime}] - [{levelname}] - [{process}:{thread}] - [{filename}:{funcName}():{lineno}]: {message}",
+#                        datefmt="%Y-%m-%d %H:%M:%S",
+#                        style="{")
+
+    logging.basicConfig(level=logging.INFO,
+                        format="[{asctime}] - [{levelname}]: {message}",
+                        datefmt="%Y-%m-%d %H:%M:%S",
+                        style="{")
+        
+logger = logging.getLogger(__name__)
 
 
 #===============================================================================
@@ -46,6 +64,7 @@ WLAN_DEV_INFO = dict(
     WLAN_DEV_IP=1,      # Current device IP
     WLAN_DEV_MAC=2,     # Device HW MAC address
     WLAN_DEV_CON=3)     # WLAN connectivity information
+
 
 #===============================================================================
 # Exceptions
@@ -87,6 +106,8 @@ class FritzBox():
             Returns no value.
         """
         
+        logger.info("Read XML configuration for the FritzBox")
+        
         tree = ElementTree.parse(self.__configFile)
         
         root_element = tree.getroot()
@@ -109,8 +130,9 @@ class FritzBox():
         Returns:
             Requested page as string, None otherwise.
         """
-        
         pageUrl = 'http://' + self.__server + ':' + self.__port + url + "?sid=" + self.sid.decode('utf-8') + param
+        
+        logger.info("Load the FritzBox page: " + pageUrl)
         
         headers = { "Accept" : "application/xml",
                     "Content-Type" : "text/plain",
@@ -145,6 +167,8 @@ class FritzBox():
             Does not return any value.
         """
         
+        logger.info("Login to the FritzBox")
+        
         headers = { "Accept" : "application/xml",
                     "Content-Type" : "text/plain",
                     "User-Agent" : USER_AGENT}
@@ -158,9 +182,7 @@ class FritzBox():
         page = response.read()
     
         if (response.status != 200):
-            print( "%s %s" % (response.status, response.reason))
-            
-            print(page)
+            logger.error("Unexpected feedback from FritzBox received: %s %s" % (response.status, response.reason))
             
             return False
         else:
@@ -184,6 +206,8 @@ class FritzBox():
                 response_bf = challenge + '-' + m.hexdigest().lower()
                 
             else:
+                logger.info("Authentication succeeded")
+                
                 self.sid = sid
                 
                 return True
@@ -201,19 +225,19 @@ class FritzBox():
         page = response.read()    
         
         if (response.status != 200):
-            print( "%s %s" % (response.status, response.reason))    
-            
-            print(page)
+            logger.error("Unexpected feedback from FritzBox received: %s %s" % (response.status, response.reason))
             
             return False
         else:
             sid = re.search(b'<SID>(.*?)</SID>', page).group(1)
             
             if (sid == "0000000000000000"):
-                print("ERROR - No SID received because of invalid password")
+                logger.error("Authentication failed due to invalid password")
                 
                 sys.exit(0)
             else:
+                logger.info("Authentication succeeded")
+                
                 self.sid = sid
                 
                 return True
@@ -239,17 +263,21 @@ class FritzBox():
         devices = self.getWLANDeviceInformation()
         
         if deviceName is not None:
+            logger.info("Check if the device " + deviceName + " is present")
+            
             for device in devices:
                 if device[WLAN_DEV_INFO['WLAN_DEV_NAME']] == deviceName:
                     return device[WLAN_DEV_INFO['WLAN_DEV_CON']]
         elif deviceMac is not None:
+            logger.info("Check if the device " + deviceMac + " is present")
+            
             for device in devices:
                 if device[WLAN_DEV_INFO['WLAN_DEV_MAC']] == deviceMac:
                     return device[WLAN_DEV_INFO['WLAN_DEV_CON']]
         else:
-            raise InvalidParameterError("The required parameters have not been provided")
+            raise InvalidParameterError()
         
-        raise UnknownDeviceError("This device is not registered with the FritzBox")
+        raise UnknownDeviceError()
 
         
     def getWLANDeviceInformation(self):
@@ -264,6 +292,8 @@ class FritzBox():
             List will all devices and information as two-dimensional matrix. The parameters for each device
             are accessible using the index FB_WLAN_DEV_INFO elements.
         """
+        
+        logger.info("Load WLAN device information from the FritzBox for all known devices")
         
         deviceList = []
         
