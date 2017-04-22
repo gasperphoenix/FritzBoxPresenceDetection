@@ -15,6 +15,7 @@ __email__      = "Dennis.Jung@stressfrei-arbeiten.com"
 #===============================================================================
 # Imports
 #===============================================================================
+import optparse
 import logging
 import urllib.request
 import hashlib
@@ -27,15 +28,46 @@ import xml.etree.ElementTree as ElementTree
 
 
 #===============================================================================
+# Evaluate parameters
+#===============================================================================
+if __name__ == '__main__':
+    parser = optparse.OptionParser()
+    
+    parser.add_option('-v', 
+                      help='Debug level INFO', 
+                      dest='verbose_INFO',
+                      default=False,
+                      action='store_true')
+    parser.add_option('--vv', 
+                      help='Debug level ERROR', 
+                      dest='verbose_ERROR',
+                      default=False,
+                      action='store_true')
+    parser.add_option('--vvv', 
+                      help='Debug level DEBUG', 
+                      dest='verbose_DEBUG',
+                      default=False,
+                      action='store_true')
+    
+    (opts, args) = parser.parse_args()
+
+
+#===============================================================================
 # Setup logger
 #===============================================================================
 if __name__ == '__main__':
-#    logging.basicConfig(level=logging.DEBUG,
+    log_level = logging.CRITICAL
+    
+    if opts.verbose_INFO: log_level = logging.INFO
+    if opts.verbose_ERROR: log_level = logging.ERROR
+    if opts.verbose_DEBUG: log_level = logging.DEBUG
+    
+#    logging.basicConfig(level=log_level,
 #                        format="[{asctime}] - [{levelname}] - [{process}:{thread}] - [{filename}:{funcName}():{lineno}]: {message}",
 #                        datefmt="%Y-%m-%d %H:%M:%S",
 #                        style="{")
 
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(level=log_level,
                         format="[{asctime}] - [{levelname}]: {message}",
                         datefmt="%Y-%m-%d %H:%M:%S",
                         style="{")
