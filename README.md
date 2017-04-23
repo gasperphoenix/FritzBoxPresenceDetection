@@ -56,6 +56,16 @@ Step 3: Check the presence of a device. Make sure to use exactly the same device
 fb.isDevicePresent('YourDevice'))
 ```
 
+Putting it all together:
+```
+import FritzBox
+
+fb = FritzBox.FritzBox()
+
+if fb.login():
+	fb.isDevicePresent('YourDevice'))
+```
+
 ## Authors
 
 * **Dennis Jung** - *Repository owner* - [Stressfrei-arbeiten.com](https://stressfrei-arbeiten.com)
