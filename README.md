@@ -65,7 +65,7 @@ Options:
                         used.
 ```
 
-You can eg. check the WLAN device presence of the device 'YourDevice1' with the following command line.
+You can eg. check the WLAN device presence of the device 'YourDevice' with the following command line.
 
 ```
 $ python3 FritzBox.py --name YourDevice
