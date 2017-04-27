@@ -38,7 +38,7 @@ Open the file cfg/fritzbox.conf to enter your credentials for accessing your Fri
 </fritzbox>
 ```
 
-#### Usage as Command Line Tool
+### Usage as Command Line Tool
 
 The script includes a help that will be printed on the console if you call it with the parameter '--help'.
 
@@ -74,7 +74,7 @@ True
 ```
 
 
-#### Usage as import module
+### Usage as import module
 Three steps are required to check the presence of a device:
 
 Step 1: Create class instance
