@@ -31,23 +31,45 @@ import xml.etree.ElementTree as ElementTree
 # Evaluate parameters
 #===============================================================================
 if __name__ == '__main__':
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(usage="usage: %prog [options]", 
+                                   description="In case no option is selected the script will "
+                                    "return the list of all known devices including their WLAN presence status. " 
+                                    "If --name or --mac is specified it will return 'True' if the device is present, 'False' otherwise.")
     
-    parser.add_option('-v', 
+    parser.add_option('--v1', 
                       help='Debug level INFO', 
                       dest='verbose_INFO',
                       default=False,
                       action='store_true')
-    parser.add_option('--vv', 
+    parser.add_option('--v2', 
                       help='Debug level ERROR', 
                       dest='verbose_ERROR',
                       default=False,
                       action='store_true')
-    parser.add_option('--vvv', 
+    parser.add_option('--v3', 
                       help='Debug level DEBUG', 
                       dest='verbose_DEBUG',
                       default=False,
                       action='store_true')
+    
+    parser.add_option('-n',
+                      '--name', 
+                      help='Check presence of device identified by its name registered on the FritzBox', 
+                      dest='name',
+                      action='store')
+    
+    parser.add_option('-m',
+                      '--mac', 
+                      help='Check presence of device identified by its MAC address', 
+                      dest='mac',
+                      action='store')
+    
+    parser.add_option('-c',
+                      '--config', 
+                      help='FritzBox configuration file. If not specified the default configuration '
+                      'from the installation will be used.', 
+                      dest='config',
+                      action='store')
     
     (opts, args) = parser.parse_args()
 
@@ -106,7 +128,7 @@ class InvalidParameterError(Exception): pass
 
 
 #===============================================================================
-# Start of program
+# Class definitions
 #===============================================================================
 class FritzBox():
     """Interface for communication with a FritzBox.
@@ -368,24 +390,25 @@ class FritzBox():
                 
         return deviceList
             
-    
-def main():
-    """Main method for testing purposes and usage example.
-        
-        The method is used for testing of the module functionality and to provide
-        an usage example.
-        
-        Args:
-            Requires no arguments.
 
-        Returns:
-            Returns no value.
-    """
+#===============================================================================
+# Main program
+#===============================================================================
+def main():    
+    fb = FritzBox(opts.config)
     
-    fb = FritzBox()
-    
-    if fb.login():
-        print(fb.getWLANDeviceInformation())
+    if (fb.login()):
+        if (opts.name == None) & (opts.mac == None):
+            devices = fb.getWLANDeviceInformation()
+            
+            for device in devices:
+                print("%s %s %s %s" %(device[0], device[1], device[2], device[3]))
+            
+        elif (opts.name != None):
+            print(fb.isDevicePresent(deviceName=opts.name))
+            
+        elif (opts.mac != None):
+            print(fb.isDevicePresent(deviceMac=opts.mac))
         
     
 if __name__ == '__main__':

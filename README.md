@@ -4,6 +4,8 @@ This module brings reliable presence detection for all WLAN devices (including i
 
 The task to setup a reliable presence detection for devices that can be used eg. to check if a person is present (by checking mobile phone presence) is not easy. You can ping mobile devices which works for most device types but eg. iPhone devices will enter stealth mode after approx. 10 minutes if the screen is locked. Therefore these devices will be wrongly detected as absent if you ping them. So I started developing another solution. I figured out that my FritzBox is capable to detect the presence status of all WLAN devices (incl. iPhone devices) in a reliable manner with an approx. 1 minutes delay. As outcome I developed this module that  logs into your FritzBox and checks the device availability using the FritzBox WLAN connectivity information. 
 
+The module can be used both as module to be imported in other Python modules or as standalone script.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -24,7 +26,7 @@ wget https://github.com/gasperphoenix/FritzBoxPresenceDetection/archive/master.z
 
 Extract the archive content to a local folder.
 
-Open the file cfg/fritzbox.conf to enter you credentials for accessing your FritzBox.
+Open the file cfg/fritzbox.conf to enter your credentials for accessing your FritzBox.
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
@@ -36,12 +38,49 @@ Open the file cfg/fritzbox.conf to enter you credentials for accessing your Frit
 </fritzbox>
 ```
 
+### Usage as Command Line Tool
+
+The script includes a help that will be printed on the console if you call it with the parameter '--help'.
+
+```
+$ python3 FritzBox.py --help
+
+Usage: FritzBox.py [options]
+
+In case no option is selected the script will return the list of all known
+devices including their WLAN presence status. If --name or --mac is specified
+it will return 'True' if the device is present, 'False' otherwise.
+
+Options:
+  -h, --help            show this help message and exit
+  --v1                  Debug level INFO
+  --v2                  Debug level ERROR
+  --v3                  Debug level DEBUG
+  -n NAME, --name=NAME  Check presence of device identified by its name
+                        registered on the FritzBox
+  -m MAC, --mac=MAC     Check presence of device identified by its MAC address
+  -c CONFIG, --config=CONFIG
+                        FritzBox configuration file. If not specified the
+                        default configuration from the installation will be
+                        used.
+```
+
+You can eg. check the WLAN device presence of the device 'YourDevice' with the following command line.
+
+```
+$ python3 FritzBox.py --name YourDevice
+
+True
+```
+
+
+### Usage as import module
 Three steps are required to check the presence of a device:
 
 Step 1: Create class instance
 
 ```
-fb = FritzBox()
+fb = FritzBox.FritzBox()
 ```
 
 Step 2: Authenticate with the FritzBox
@@ -53,7 +92,7 @@ fb.login()
 Step 3: Check the presence of a device. Make sure to use exactly the same device name that is listed on your FritzBox pages. The method will return 'True' if your device is connected, otherwise 'False'.
 
 ```
-fb.isDevicePresent('YourDevice'))
+fb.isDevicePresent('YourDevice')
 ```
 
 Putting it all together:
@@ -62,8 +101,8 @@ import FritzBox
 
 fb = FritzBox.FritzBox()
 
-if fb.login():
-	fb.isDevicePresent('YourDevice'))
+if (fb.login()):
+	print(fb.isDevicePresent('YourDevice'))
 ```
 
 ## Authors
