@@ -15,12 +15,11 @@ __email__      = "Dennis.Jung@stressfrei-arbeiten.com"
 #===============================================================================
 # Imports
 #===============================================================================
-import optparse
+import argparse
 import logging
 import urllib.request
 import hashlib
 import re
-import sys
 
 from xml.dom import minidom
 
@@ -31,47 +30,47 @@ import xml.etree.ElementTree as ElementTree
 # Evaluate parameters
 #===============================================================================
 if __name__ == '__main__':
-    parser = optparse.OptionParser(usage="usage: %prog [options]", 
-                                   description="In case no option is selected the script will "
-                                    "return the list of all known devices including their WLAN presence status. " 
-                                    "If --name or --mac is specified it will return 'True' if the device is present, 'False' otherwise.")
+    parser = argparse.ArgumentParser(usage="%(prog)s [options]", 
+                                     description="In case no option is selected the script will "
+                                     "return the list of all known devices including their WLAN presence status. " 
+                                     "If --name or --mac is specified it will return 'True' if the device is present, 'False' otherwise.")
     
-    parser.add_option('--v1', 
+    parser.add_argument('--v1', 
                       help='Debug level INFO', 
                       dest='verbose_INFO',
                       default=False,
                       action='store_true')
-    parser.add_option('--v2', 
-                      help='Debug level ERROR', 
-                      dest='verbose_ERROR',
-                      default=False,
-                      action='store_true')
-    parser.add_option('--v3', 
-                      help='Debug level DEBUG', 
-                      dest='verbose_DEBUG',
-                      default=False,
-                      action='store_true')
+    parser.add_argument('--v2', 
+                        help='Debug level ERROR', 
+                        dest='verbose_ERROR',
+                        default=False,
+                        action='store_true')
+    parser.add_argument('--v3', 
+                        help='Debug level DEBUG', 
+                        dest='verbose_DEBUG',
+                        default=False,
+                        action='store_true')
     
-    parser.add_option('-n',
-                      '--name', 
-                      help='Check presence of device identified by its name registered on the FritzBox', 
-                      dest='name',
-                      action='store')
+    parser.add_argument('-n',
+                        '--name', 
+                        help='Check presence of device identified by its name registered on the FritzBox', 
+                        dest='name',
+                        action='store')
     
-    parser.add_option('-m',
-                      '--mac', 
-                      help='Check presence of device identified by its MAC address', 
-                      dest='mac',
-                      action='store')
+    parser.add_argument('-m',
+                        '--mac', 
+                        help='Check presence of device identified by its MAC address', 
+                        dest='mac',
+                        action='store')
     
-    parser.add_option('-c',
-                      '--config', 
-                      help='FritzBox configuration file. If not specified the default configuration '
-                      'from the installation will be used.', 
-                      dest='config',
-                      action='store')
+    parser.add_argument('-c',
+                        '--config', 
+                        help='FritzBox configuration file. If not specified the default configuration '
+                        'from the installation will be used.', 
+                        dest='config',
+                        action='store')
     
-    (opts, args) = parser.parse_args()
+    args = parser.parse_args()
 
 
 #===============================================================================
@@ -80,9 +79,9 @@ if __name__ == '__main__':
 if __name__ == '__main__':
     log_level = logging.CRITICAL
     
-    if opts.verbose_INFO: log_level = logging.INFO
-    if opts.verbose_ERROR: log_level = logging.ERROR
-    if opts.verbose_DEBUG: log_level = logging.DEBUG
+    if args.verbose_INFO: log_level = logging.INFO
+    if args.verbose_ERROR: log_level = logging.ERROR
+    if args.verbose_DEBUG: log_level = logging.DEBUG
     
 #    logging.basicConfig(level=log_level,
 #                        format="[{asctime}] - [{levelname}] - [{process}:{thread}] - [{filename}:{funcName}():{lineno}]: {message}",
@@ -395,20 +394,20 @@ class FritzBox():
 # Main program
 #===============================================================================
 def main():    
-    fb = FritzBox(opts.config)
+    fb = FritzBox(args.config)
     
     if (fb.login()):
-        if (opts.name == None) & (opts.mac == None):
+        if (args.name == None) & (args.mac == None):
             devices = fb.getWLANDeviceInformation()
             
             for device in devices:
                 print("%s %s %s %s" %(device[0], device[1], device[2], device[3]))
             
-        elif (opts.name != None):
-            print(fb.isDevicePresent(deviceName=opts.name))
+        elif (args.name != None):
+            print(fb.isDevicePresent(deviceName=args.name))
             
-        elif (opts.mac != None):
-            print(fb.isDevicePresent(deviceMac=opts.mac))
+        elif (args.mac != None):
+            print(fb.isDevicePresent(deviceMac=args.mac))
         
     
 if __name__ == '__main__':
