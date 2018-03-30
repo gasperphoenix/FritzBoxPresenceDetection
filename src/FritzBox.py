@@ -20,6 +20,7 @@ import logging
 import urllib.request
 import hashlib
 import re
+import json
 
 from xml.dom import minidom
 
@@ -122,7 +123,6 @@ WLAN_DEV_INFO = dict(
 #===============================================================================
 # Exceptions
 #===============================================================================
-class UnknownDeviceError(Exception): pass    
 class InvalidParameterError(Exception): pass
 
 
@@ -310,9 +310,11 @@ class FritzBox():
         The method checks if the specified device is currently in WLAN access range of the FritzBox
         to determine if it is present or not.
         
+        Note: The parameter deviceMac is no longer supported by the FritzBox and will always return absent state.
+        
         Args:
             deviceName (str): Device that shall be checked.
-            deviceMac (str):  Device Mac that shall be checked.
+            deviceMac (str):  <DEPRECATED> Device Mac that shall be checked.
             
         Raises:
             UnknownDeviceError: If the given device is not registered with the FritzBox 
@@ -338,7 +340,7 @@ class FritzBox():
         else:
             raise InvalidParameterError()
         
-        raise UnknownDeviceError()
+        return False
 
         
     def getWLANDeviceInformation(self):
@@ -360,31 +362,16 @@ class FritzBox():
         
         page = self.loadFritzBoxPage('/data.lua', 'lang=de&no_sidrenew=&page=wSet')
 
-        deviceTable = re.findall(r'<table id="uiWlanDevs".*?>.*?</table>', str(page), re.MULTILINE|re.DOTALL)
+        jsonStructure = json.loads(page.decode('UTF-8'))
         
-        deviceTableBody = re.findall(r'<tbody>.*?</tbody>', str(deviceTable), re.MULTILINE|re.DOTALL)
+        jsonStructure_devices = jsonStructure['data']['net']['devices']
         
-        devicesSections = re.findall(r'<tr.*?>.*?</tr>', str(deviceTableBody), re.MULTILINE|re.DOTALL)
-        
-        devices = re.findall(r'<td.*?>(.*?)</td>', str(devicesSections), re.MULTILINE|re.DOTALL)
-                
-        for i in range(len(devices) // 7):
-            name = devices[FB_WLAN_DEV_INFO['FB_DEV_NAME'] + i * 7]
+        for i in range(len(jsonStructure_devices)):
+            name = jsonStructure_devices[i]['name']
+            ip = ''
+            mac = ''
+            con = True
             
-            #Strip link tag from device name if encapsulated
-            if "<a" in name:
-                name = re.findall(r'<a.*?>(.*?)</a>', str(name), re.MULTILINE|re.DOTALL)
-                name = name[0]
-                
-            ip = devices[FB_WLAN_DEV_INFO['FB_DEV_IP'] + i * 7]
-            
-            mac = devices[FB_WLAN_DEV_INFO['FB_DEV_MAC'] + i * 7] 
-            
-            if ("nicht verbunden" in devices[FB_WLAN_DEV_INFO['FB_DEV_CON'] + i * 7]):
-                con = False
-            else:         
-                con = True
-                
             deviceList.append([name, ip, mac, con]) # Structure acc. WLAN_DEV_INFO
                 
         return deviceList
