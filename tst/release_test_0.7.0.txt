@@ -1,0 +1,40 @@
+Release test
+
+#===============================================================================
+# Test setup
+#===============================================================================
+Target: FRITZ!Box 6490 Cable, FRITZ!OS 06.87
+Devices: MacBook Pro 10.13.3
+
+
+#===============================================================================
+# Command Line Tool tests
+#===============================================================================
+TEST_1.1: Command Line Tool - Usage output
+[ok] Run the script with the parameter '--help'
+[ok] Check if the usage correctly printed on the console?
+
+TEST_1.2: Command Line Tool - WLAN presence information by name
+[ok] Run the script with the parameter '--name' and a valid device name
+[ok] Check if the device WLAN status is returned correctly
+
+TEST_1.3: Command Line Tool - WLAN presence information for all devices
+[ok] Run the script without specifying the  parameter '--name'
+[ok] Check if the WLAN status is returned correctly for all devices known to the FritzBox
+
+TEST_1.4: Command Line Tool - Output logger information
+[ok] Run the script with the option '--v3'
+[ok] Check if the script prints out logger information
+
+
+#===============================================================================
+# Import module tests
+#===============================================================================
+TEST_2.1: Import module tests - getWLANDeviceInformation()
+[ok] Execute the method and check if the returned output is correct
+
+TEST_2.2: Import module tests - isDevicePresent(deviceName)
+[ok] Execute the method with a valid deviceName and check if the returned output is correct
+
+TEST_2.3: Import module tests - isDevicePresent(deviceName)
+[ok] Execute the method with an invalid deviceName and check if the device is reported as absent
