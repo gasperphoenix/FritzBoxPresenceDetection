@@ -1,6 +1,6 @@
 # FritzBox Presence Detection
 
-This module brings reliable presence detection for all WLAN devices (including iPhone) that can also be used on a Raspberry Pi.
+This module provides reliable presence detection for all WLAN devices (including iPhone) that can also be used on a Raspberry Pi.
 
 The task to setup a reliable presence detection for devices that can be used eg. to check if a person is present (by checking mobile phone presence) is not easy. You can ping mobile devices which works for most device types but eg. iPhone devices will enter stealth mode after approx. 10 minutes if the screen is locked. Therefore these devices will be wrongly detected as absent if you ping them. So I started developing another solution. I figured out that my FritzBox is capable to detect the presence status of all WLAN devices (incl. iPhone devices) in a reliable manner with an approx. 1 minutes delay. As outcome I developed this module that  logs into your FritzBox and checks the device availability using the FritzBox WLAN connectivity information. 
 
