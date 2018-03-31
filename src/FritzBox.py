@@ -21,6 +21,7 @@ import urllib.request
 import hashlib
 import re
 import json
+import time
 
 from xml.dom import minidom
 
@@ -56,12 +57,6 @@ if __name__ == '__main__':
                         '--name', 
                         help='Check presence of device identified by its name registered on the FritzBox', 
                         dest='name',
-                        action='store')
-    
-    parser.add_argument('-m',
-                        '--mac', 
-                        help='Check presence of device identified by its MAC address', 
-                        dest='mac',
                         action='store')
     
     parser.add_argument('-c',
@@ -102,22 +97,13 @@ logger = logging.getLogger(__name__)
 #===============================================================================
 USER_AGENT = "Mozilla/5.0 (U; Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0"
 
-# Structure of the WLAN device information returned by the FritzBox  
-FB_WLAN_DEV_INFO = dict(
-    FB_DEV_RES1=0,    # Reserved
-    FB_DEV_NAME=1,    # Device name
-    FB_DEV_IP=2,      # Current device IP
-    FB_DEV_MAC=3,     # Device HW MAC address
-    FB_DEV_RES2=4,    # Reserved
-    FB_DEV_CON=5,     # WLAN connectivity information
-    FB_DEV_RES3=6)    # Reserved
-
 # Structure of the WLAN device information  
 WLAN_DEV_INFO = dict(
     WLAN_DEV_NAME=0,    # Device name
     WLAN_DEV_IP=1,      # Current device IP
     WLAN_DEV_MAC=2,     # Device HW MAC address
-    WLAN_DEV_CON=3)     # WLAN connectivity information
+    WLAN_DEV_CON=3,     # WLAN connectivity information
+    WLAN_DEV_ON_TS=4)   # Last WLAN presence timestamp
 
 
 #===============================================================================
@@ -141,6 +127,10 @@ class FritzBox():
         self.__readXMLConfigFritzBox()
         
         self.sid = ''
+        
+        self.deviceList = {}
+        
+        self.chk_ts = 0
     
     
     def __del__(self):
@@ -304,17 +294,17 @@ class FritzBox():
                 return True
         
     
-    def isDevicePresent(self, deviceName=None, deviceMac=None):
+    def isDevicePresent(self, deviceName=None, debounceOff=0):
         """Check if the given device is currently in WLAN access range -> device is present.
         
         The method checks if the specified device is currently in WLAN access range of the FritzBox
-        to determine if it is present or not.
-        
-        Note: The parameter deviceMac is no longer supported by the FritzBox and will always return absent state.
-        
+        to determine if it is present or not. You can optionally specify a debounce time for the transition
+        to the absent state. This is helpful if you observe sporadic absent detections e.g. for iPhone
+        devices.
+                
         Args:
             deviceName (str): Device that shall be checked.
-            deviceMac (str):  <DEPRECATED> Device Mac that shall be checked.
+            debounceOff (int):  Debounce transition to absent by this no. of minutes
             
         Raises:
             UnknownDeviceError: If the given device is not registered with the FritzBox 
@@ -323,20 +313,20 @@ class FritzBox():
             If the device is registered with the FritzBox the method will return True if the device is present, False otherwise.
         """
         
-        devices = self.getWLANDeviceInformation()
+        devices, chk_ts = self.getWLANDeviceInformation()
         
         if deviceName is not None:
             logger.debug("Check if the device " + deviceName + " is present")
             
-            for device in devices:
-                if device[WLAN_DEV_INFO['WLAN_DEV_NAME']] == deviceName:
-                    return device[WLAN_DEV_INFO['WLAN_DEV_CON']]
-        elif deviceMac is not None:
-            logger.debug("Check if the device " + deviceMac + " is present")
-            
-            for device in devices:
-                if device[WLAN_DEV_INFO['WLAN_DEV_MAC']] == deviceMac:
-                    return device[WLAN_DEV_INFO['WLAN_DEV_CON']]
+            if deviceName in devices:
+                if chk_ts - devices[deviceName]['on_ts'] == 0:
+                    return True # Device is present
+                elif chk_ts - devices[deviceName]['on_ts'] <= 60 * debounceOff:
+                    return True # Device is absent less than the defined debounce time
+                else:
+                    return False # Device is absent for more than the defined debounce time
+            else:
+                return False # Device is not listed and therefore not present
         else:
             raise InvalidParameterError()
         
@@ -352,13 +342,15 @@ class FritzBox():
             None
 
         Returns:
-            List will all devices and information as two-dimensional matrix. The parameters for each device
-            are accessible using the index FB_WLAN_DEV_INFO elements.
+            deviceList (List): List with all devices and information as two-dimensional matrix. The parameters for each device
+                               are accessible using the index FB_WLAN_DEV_INFO elements.
+                        
+            chk_ts (float):    Timestamp of the last presence check
         """
         
         logger.debug("Load WLAN device information from the FritzBox for all known devices")
         
-        deviceList = []
+        self.chk_ts = time.time()
         
         page = self.loadFritzBoxPage('/data.lua', 'lang=de&no_sidrenew=&page=wSet')
 
@@ -368,13 +360,11 @@ class FritzBox():
         
         for i in range(len(jsonStructure_devices)):
             name = jsonStructure_devices[i]['name']
-            ip = ''
-            mac = ''
-            con = True
+            on_ts = self.chk_ts
             
-            deviceList.append([name, ip, mac, con]) # Structure acc. WLAN_DEV_INFO
+            self.deviceList[name] = {'on_ts' : on_ts}
                 
-        return deviceList
+        return self.deviceList, self.chk_ts
             
 
 #===============================================================================
@@ -384,17 +374,13 @@ def main():
     fb = FritzBox(args.config)
     
     if (fb.login()):
-        if (args.name == None) & (args.mac == None):
-            devices = fb.getWLANDeviceInformation()
+        if (args.name == None):
+            devices, chk_ts = fb.getWLANDeviceInformation()
             
-            for device in devices:
-                print("%s %s %s %s" %(device[0], device[1], device[2], device[3]))
+            print(devices)
             
         elif (args.name != None):
             print(fb.isDevicePresent(deviceName=args.name))
-            
-        elif (args.mac != None):
-            print(fb.isDevicePresent(deviceMac=args.mac))
         
     
 if __name__ == '__main__':
