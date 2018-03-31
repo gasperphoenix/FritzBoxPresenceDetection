@@ -97,14 +97,6 @@ logger = logging.getLogger(__name__)
 #===============================================================================
 USER_AGENT = "Mozilla/5.0 (U; Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0"
 
-# Structure of the WLAN device information  
-WLAN_DEV_INFO = dict(
-    WLAN_DEV_NAME=0,    # Device name
-    WLAN_DEV_IP=1,      # Current device IP
-    WLAN_DEV_MAC=2,     # Device HW MAC address
-    WLAN_DEV_CON=3,     # WLAN connectivity information
-    WLAN_DEV_ON_TS=4)   # Last WLAN presence timestamp
-
 
 #===============================================================================
 # Exceptions
