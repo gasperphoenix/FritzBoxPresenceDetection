@@ -45,22 +45,22 @@ The script includes a help that will be printed on the console if you call it wi
 ```
 $ python3 FritzBox.py --help
 
-Usage: FritzBox.py [options]
+usage: FritzBox.py [options]
 
 In case no option is selected the script will return the list of all known
-devices including their WLAN presence status. If --name is specified
-it will return 'True' if the device is present, 'False' otherwise.
+devices including their WLAN presence status. If --name or --mac is specified
+it will return 'True' if the device is present, 'False' otherwise. Debouncing
+of the transitions to absent is not supported if the script is used as command
+line tool.
 
-**NOTE: Debouncing of the transitions to absent is not supported if the script is used as command line tool.** 
-
-Options:
+optional arguments:
   -h, --help            show this help message and exit
   --v1                  Debug level INFO
   --v2                  Debug level ERROR
   --v3                  Debug level DEBUG
-  -n NAME, --name=NAME  Check presence of device identified by its name
+  -n NAME, --name NAME  Check presence of device identified by its name
                         registered on the FritzBox
-  -c CONFIG, --config=CONFIG
+  -c CONFIG, --config CONFIG
                         FritzBox configuration file. If not specified the
                         default configuration from the installation will be
                         used.

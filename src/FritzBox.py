@@ -35,7 +35,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage="%(prog)s [options]", 
                                      description="In case no option is selected the script will "
                                      "return the list of all known devices including their WLAN presence status. " 
-                                     "If --name or --mac is specified it will return 'True' if the device is present, 'False' otherwise.")
+                                     "If --name or --mac is specified it will return 'True' if the device is present, 'False' otherwise. "
+                                     "Debouncing of the transitions to absent is not supported if the script is used as command line tool.")
     
     parser.add_argument('--v1', 
                       help='Debug level INFO', 
