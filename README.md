@@ -1,3 +1,6 @@
+** >> THIS MODULE IS NO LONGER SUPPORTED, PLEASE REFER TO MY NEW PROJECT BELOW << **
+# [FritzBox](https://github.com/gasperphoenix/FritzBox)
+
 # FritzBox Presence Detection
 
 This module provides reliable presence detection for all WLAN devices (including iPhone) that can also be used on a Raspberry Pi.
