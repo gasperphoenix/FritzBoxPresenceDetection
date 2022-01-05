@@ -235,8 +235,9 @@ class FritzBox():
             sidInfo = pageXml.getElementsByTagName('SID')
             
             sid = sidInfo[0].firstChild.data
-            
-            if (sid == "0000000000000000"):   
+
+            if (sid == "0000000000000000"):
+                user = pageXml.getElementsByTagName('Users')[0].firstChild.firstChild.data
                 challengeInfo = pageXml.getElementsByTagName('Challenge')
                 
                 challenge = challengeInfo[0].firstChild.data
@@ -260,8 +261,8 @@ class FritzBox():
                     "Content-Type" : "application/x-www-form-urlencoded",
                     "User-Agent" : USER_AGENT}
 
-        pageUrl = 'http://' + self.__server + ':' + self.__port + "/login_sid.lua?&response=" + response_bf
-    
+        pageUrl = 'http://' + self.__server + ':' + self.__port + "/login_sid.lua?user=" + user + "&response=" + response_bf
+
         request = urllib.request.Request(pageUrl, headers = headers)
     
         response = urllib.request.urlopen(request)
@@ -274,8 +275,8 @@ class FritzBox():
             return False
         else:
             sid = re.search(b'<SID>(.*?)</SID>', page).group(1)
-            
-            if (sid == "0000000000000000"):
+
+            if (sid.decode('UTF-8') == "0000000000000000"):
                 logger.error("Authentication failed due to invalid password")
                 
                 return False
@@ -322,8 +323,6 @@ class FritzBox():
                 return False # Device is not listed and therefore not present
         else:
             raise InvalidParameterError()
-        
-        return False
 
         
     def getWLANDeviceInformation(self):
